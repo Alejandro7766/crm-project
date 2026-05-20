@@ -3,6 +3,8 @@ const cors = require('cors');
 const mysql = require('mysql2');
 require('dotenv').config();
 
+const authRoutes = require('./routes/auth');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -23,6 +25,8 @@ db.connect((err) => {
   }
   console.log('Conectado a la base de datos MySQL');
 });
+
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'CRM API funcionando' });
