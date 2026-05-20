@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import Dashboard from './pages/Dashboard'
 
 function App() {
   const [email, setEmail] = useState('')
@@ -25,43 +26,13 @@ function App() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setUsuario(null)
+  }
+
   if (usuario) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#f0f2f5'
-      }}>
-        <div style={{
-          background: 'white',
-          padding: '40px',
-          borderRadius: '12px',
-          textAlign: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ color: '#534AB7' }}>Bienvenido, {usuario.nombre}</h2>
-          <p style={{ color: '#888' }}>Rol: {usuario.rol}</p>
-          <button
-            onClick={() => {
-              localStorage.removeItem('token')
-              setUsuario(null)
-            }}
-            style={{
-              marginTop: '20px',
-              padding: '10px 24px',
-              backgroundColor: '#534AB7',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}>
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    )
+    return <Dashboard usuario={usuario} onLogout={handleLogout} />
   }
 
   return (
