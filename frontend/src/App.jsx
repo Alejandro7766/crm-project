@@ -1,12 +1,67 @@
 import { useState } from 'react'
+import axios from 'axios'
 
 function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [usuario, setUsuario] = useState(null)
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    alert(`Iniciando sesión con: ${email}`)
+    setError('')
+
+    try {
+      const res = await axios.post('http://localhost:3000/api/auth/login', {
+        email,
+        contrasena: password
+      })
+
+      localStorage.setItem('token', res.data.token)
+      setUsuario(res.data.usuario)
+
+    } catch (err) {
+      setError('Email o contraseña incorrectos')
+    }
+  }
+
+  if (usuario) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#f0f2f5'
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '40px',
+          borderRadius: '12px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ color: '#534AB7' }}>Bienvenido, {usuario.nombre}</h2>
+          <p style={{ color: '#888' }}>Rol: {usuario.rol}</p>
+          <button
+            onClick={() => {
+              localStorage.removeItem('token')
+              setUsuario(null)
+            }}
+            style={{
+              marginTop: '20px',
+              padding: '10px 24px',
+              backgroundColor: '#534AB7',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -26,6 +81,10 @@ function App() {
       }}>
         <h2 style={{ textAlign: 'center', marginBottom: '8px', color: '#1a1a2e' }}>CRM</h2>
         <p style={{ textAlign: 'center', color: '#888', marginBottom: '24px' }}>Inicia sesión en tu cuenta</p>
+
+        {error && (
+          <p style={{ color: 'red', textAlign: 'center', marginBottom: '16px' }}>{error}</p>
+        )}
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '16px' }}>
