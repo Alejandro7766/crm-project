@@ -4,6 +4,8 @@ const mysql = require('mysql2');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const clientesRoutes = require('./routes/clientes');
+const empleadosRoutes = require('./routes/empleados');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +29,8 @@ db.connect((err) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/clientes', clientesRoutes);
+app.use('/api/empleados', empleadosRoutes);
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'CRM API funcionando' });
