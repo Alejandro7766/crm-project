@@ -1,14 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Clientes from './Clientes'
 import Empleados from './Empleados'
 
 function Dashboard({ usuario, onLogout }) {
   const [paginaActual, setPaginaActual] = useState('dashboard')
+  const [stats, setStats] = useState({ clientes: 0, empleados: 0, activos: 0 })
+
+  useEffect(() => {
+    cargarEstadisticas()
+  }, [])
+
+  const cargarEstadisticas = async () => {
+    try {
+      const [resClientes, resEmpleados] = await Promise.all([
+        axios.get('http://localhost:3000/api/clientes'),
+        axios.get('http://localhost:3000/api/empleados')
+      ])
+      const activos = resClientes.data.filter(c => c.estado === 'activo').length
+      setStats({
+        clientes: resClientes.data.length,
+        empleados: resEmpleados.data.length,
+        activos
+      })
+    } catch (err) {
+      console.error('Error cargando estadísticas')
+    }
+  }
 
   const renderContenido = () => {
     if (paginaActual === 'clientes') return <Clientes />
     if (paginaActual === 'empleados') return <Empleados />
-    
+
     return (
       <>
         <h1 style={{ color: '#1a1a2e', marginBottom: '8px' }}>Bienvenido, {usuario.nombre}</h1>
@@ -17,15 +40,15 @@ function Dashboard({ usuario, onLogout }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px' }}>
             <p style={{ color: '#888', fontSize: '13px' }}>Clientes</p>
-            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>0</h2>
+            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>{stats.clientes}</h2>
           </div>
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px' }}>
             <p style={{ color: '#888', fontSize: '13px' }}>Empleados</p>
-            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>0</h2>
+            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>{stats.empleados}</h2>
           </div>
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px' }}>
             <p style={{ color: '#888', fontSize: '13px' }}>Activos</p>
-            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>0</h2>
+            <h2 style={{ color: '#1a1a2e', fontSize: '32px' }}>{stats.activos}</h2>
           </div>
         </div>
 
@@ -39,19 +62,13 @@ function Dashboard({ usuario, onLogout }) {
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      
       <div style={{
-        width: '220px',
-        backgroundColor: '#1a1a2e',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '24px 16px'
+        width: '220px', backgroundColor: '#1a1a2e', color: 'white',
+        display: 'flex', flexDirection: 'column', padding: '24px 16px'
       }}>
         <h2 style={{ color: '#534AB7', marginBottom: '32px' }}>CRM</h2>
-        
         <nav style={{ flex: 1 }}>
-          <p onClick={() => setPaginaActual('dashboard')} style={{
+          <p onClick={() => { setPaginaActual('dashboard'); cargarEstadisticas(); }} style={{
             padding: '10px', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer',
             backgroundColor: paginaActual === 'dashboard' ? '#534AB7' : 'transparent'
           }}>Dashboard</p>
@@ -70,7 +87,6 @@ function Dashboard({ usuario, onLogout }) {
             }}>Administración</p>
           )}
         </nav>
-
         <div style={{ borderTop: '1px solid #333', paddingTop: '16px' }}>
           <p style={{ fontSize: '13px', color: '#aaa' }}>{usuario.nombre} {usuario.apellido}</p>
           <p style={{ fontSize: '11px', color: '#534AB7', marginBottom: '12px' }}>{usuario.rol}</p>
