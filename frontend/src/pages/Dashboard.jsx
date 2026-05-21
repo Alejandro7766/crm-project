@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Clientes from './Clientes'
 import Empleados from './Empleados'
+import Administracion from './Administracion'
 
 function Dashboard({ usuario, onLogout }) {
   const [paginaActual, setPaginaActual] = useState('dashboard')
@@ -31,6 +32,7 @@ function Dashboard({ usuario, onLogout }) {
   const renderContenido = () => {
     if (paginaActual === 'clientes') return <Clientes />
     if (paginaActual === 'empleados') return <Empleados />
+    if (paginaActual === 'admin') return <Administracion />
 
     return (
       <>

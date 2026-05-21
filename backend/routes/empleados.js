@@ -73,11 +73,23 @@ router.post('/', (req, res) => {
 
 // ELIMINAR EMPLEADO
 router.delete('/:id', (req, res) => {
-  const sql = 'DELETE FROM empleados WHERE id = ?';
-  db.query(sql, [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: 'Error al eliminar empleado' });
-    res.json({ mensaje: 'Empleado eliminado correctamente' });
+    const sqlBuscar = 'SELECT usuario_id FROM empleados WHERE id = ?';
+    db.query(sqlBuscar, [req.params.id], (err, results) => {
+      if (err || results.length === 0) return res.status(500).json({ error: 'Empleado no encontrado' });
+      
+      const usuario_id = results[0].usuario_id;
+  
+      const sqlEmpleado = 'DELETE FROM empleados WHERE id = ?';
+      db.query(sqlEmpleado, [req.params.id], (err) => {
+        if (err) return res.status(500).json({ error: 'Error al eliminar empleado' });
+  
+        const sqlUsuario = 'DELETE FROM usuarios WHERE id = ?';
+        db.query(sqlUsuario, [usuario_id], (err) => {
+          if (err) return res.status(500).json({ error: 'Error al eliminar usuario' });
+          res.json({ mensaje: 'Empleado eliminado correctamente' });
+        });
+      });
+    });
   });
-});
 
 module.exports = router;
