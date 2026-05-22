@@ -12,7 +12,11 @@ const db = mysql.createConnection({
 
 // OBTENER TODOS LOS CLIENTES
 router.get('/', (req, res) => {
-  const sql = 'SELECT * FROM clientes ORDER BY creado_en DESC';
+  const sql = `SELECT c.*, u.nombre as empleado_nombre, u.apellido as empleado_apellido 
+               FROM clientes c
+               LEFT JOIN empleados e ON c.empleado_asignado_id = e.id
+               LEFT JOIN usuarios u ON e.usuario_id = u.id
+               ORDER BY c.creado_en DESC`;
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ error: 'Error al obtener clientes' });
     res.json(results);
@@ -47,12 +51,12 @@ router.post('/', (req, res) => {
 
 // EDITAR CLIENTE
 router.put('/:id', (req, res) => {
-  const { nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado } = req.body;
+  const { nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado, empleado_asignado_id } = req.body;
 
-  const sql = `UPDATE clientes SET nombre=?, apellido=?, email=?, telefono=?, empresa=?, categoria=?, direccion=?, notas=?, estado=? 
+  const sql = `UPDATE clientes SET nombre=?, apellido=?, email=?, telefono=?, empresa=?, categoria=?, direccion=?, notas=?, estado=?, empleado_asignado_id=? 
                WHERE id=?`;
 
-  db.query(sql, [nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado, req.params.id], (err) => {
+  db.query(sql, [nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado, empleado_asignado_id || null, req.params.id], (err) => {
     if (err) return res.status(500).json({ error: 'Error al editar cliente' });
     res.json({ mensaje: 'Cliente actualizado correctamente' });
   });

@@ -3,16 +3,19 @@ import axios from 'axios'
 
 function Clientes() {
   const [clientes, setClientes] = useState([])
+  const [empleados, setEmpleados] = useState([])
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [clienteEditando, setClienteEditando] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', telefono: '',
-    empresa: '', categoria: '', notas: '', estado: 'activo'
+    empresa: '', categoria: '', notas: '', estado: 'activo',
+    empleado_asignado_id: ''
   })
 
   useEffect(() => {
     cargarClientes()
+    cargarEmpleados()
   }, [])
 
   const cargarClientes = async () => {
@@ -24,9 +27,18 @@ function Clientes() {
     }
   }
 
+  const cargarEmpleados = async () => {
+    try {
+      const res = await axios.get('http://localhost:3000/api/empleados')
+      setEmpleados(res.data)
+    } catch (err) {
+      console.error('Error cargando empleados')
+    }
+  }
+
   const handleNuevo = () => {
     setClienteEditando(null)
-    setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo' })
+    setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo', empleado_asignado_id: '' })
     setMostrarFormulario(true)
   }
 
@@ -40,7 +52,8 @@ function Clientes() {
       empresa: cliente.empresa || '',
       categoria: cliente.categoria || '',
       notas: cliente.notas || '',
-      estado: cliente.estado || 'activo'
+      estado: cliente.estado || 'activo',
+      empleado_asignado_id: cliente.empleado_asignado_id || ''
     })
     setMostrarFormulario(true)
   }
@@ -55,7 +68,7 @@ function Clientes() {
       }
       setMostrarFormulario(false)
       setClienteEditando(null)
-      setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo' })
+      setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo', empleado_asignado_id: '' })
       cargarClientes()
     } catch (err) {
       console.error('Error guardando cliente')
@@ -121,6 +134,12 @@ function Clientes() {
                 <option value="inactivo">Inactivo</option>
                 <option value="potencial">Potencial</option>
               </select>
+              <select value={form.empleado_asignado_id} onChange={e => setForm({ ...form, empleado_asignado_id: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                <option value="">Sin empleado asignado</option>
+                {empleados.map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre} {e.apellido}</option>
+                ))}
+              </select>
             </div>
             <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '12px', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -141,6 +160,7 @@ function Clientes() {
               <th style={{ padding: '12px 16px', textAlign: 'left', color: '#555', fontWeight: '500' }}>Email</th>
               <th style={{ padding: '12px 16px', textAlign: 'left', color: '#555', fontWeight: '500' }}>Empresa</th>
               <th style={{ padding: '12px 16px', textAlign: 'left', color: '#555', fontWeight: '500' }}>Estado</th>
+              <th style={{ padding: '12px 16px', textAlign: 'left', color: '#555', fontWeight: '500' }}>Empleado asignado</th>
               <th style={{ padding: '12px 16px', textAlign: 'left', color: '#555', fontWeight: '500' }}>Acciones</th>
             </tr>
           </thead>
@@ -157,6 +177,9 @@ function Clientes() {
                     color: c.estado === 'activo' ? '#2e7d32' : c.estado === 'potencial' ? '#e65100' : '#c62828'
                   }}>{c.estado}</span>
                 </td>
+                <td style={{ padding: '12px 16px', color: '#888' }}>
+                  {c.empleado_nombre ? `${c.empleado_nombre} ${c.empleado_apellido}` : 'Sin asignar'}
+                </td>
                 <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
                   <button onClick={() => handleEditar(c)} style={{
                     padding: '6px 12px', backgroundColor: '#e8eaf6', color: '#534AB7',
@@ -170,7 +193,7 @@ function Clientes() {
               </tr>
             ))}
             {clientesFiltrados.length === 0 && (
-              <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: '#aaa' }}>No hay clientes</td></tr>
+              <tr><td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: '#aaa' }}>No hay clientes</td></tr>
             )}
           </tbody>
         </table>
