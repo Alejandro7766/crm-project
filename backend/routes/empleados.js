@@ -92,4 +92,20 @@ router.delete('/:id', (req, res) => {
     });
   });
 
+  // EDITAR EMPLEADO
+router.put('/:id', (req, res) => {
+  const { nombre, apellido, email, telefono, cargo, departamento, salario, fecha_contratacion } = req.body;
+
+  const sqlUsuario = `UPDATE usuarios SET nombre=?, apellido=?, email=? WHERE id=(SELECT usuario_id FROM empleados WHERE id=?)`;
+  db.query(sqlUsuario, [nombre, apellido, email, req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: 'Error al actualizar usuario' });
+
+    const sqlEmpleado = `UPDATE empleados SET telefono=?, cargo=?, departamento=?, salario=?, fecha_contratacion=? WHERE id=?`;
+    db.query(sqlEmpleado, [telefono, cargo, departamento, salario, fecha_contratacion, req.params.id], (err) => {
+      if (err) return res.status(500).json({ error: 'Error al actualizar empleado' });
+      res.json({ mensaje: 'Empleado actualizado correctamente' });
+    });
+  });
+});
+
 module.exports = router;

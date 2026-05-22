@@ -4,6 +4,7 @@ import axios from 'axios'
 function Empleados() {
   const [empleados, setEmpleados] = useState([])
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [empleadoEditando, setEmpleadoEditando] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', contrasena: '',
@@ -23,11 +24,38 @@ function Empleados() {
     }
   }
 
+  const handleNuevo = () => {
+    setEmpleadoEditando(null)
+    setForm({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '', cargo: '', departamento: '', salario: '', fecha_contratacion: '' })
+    setMostrarFormulario(true)
+  }
+
+  const handleEditar = (empleado) => {
+    setEmpleadoEditando(empleado)
+    setForm({
+      nombre: empleado.nombre || '',
+      apellido: empleado.apellido || '',
+      email: empleado.email || '',
+      contrasena: '',
+      telefono: empleado.telefono || '',
+      cargo: empleado.cargo || '',
+      departamento: empleado.departamento || '',
+      salario: empleado.salario || '',
+      fecha_contratacion: empleado.fecha_contratacion || ''
+    })
+    setMostrarFormulario(true)
+  }
+
   const handleGuardar = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:3000/api/empleados', form)
+      if (empleadoEditando) {
+        await axios.put(`http://localhost:3000/api/empleados/${empleadoEditando.id}`, form)
+      } else {
+        await axios.post('http://localhost:3000/api/empleados', form)
+      }
       setMostrarFormulario(false)
+      setEmpleadoEditando(null)
       setForm({ nombre: '', apellido: '', email: '', contrasena: '', telefono: '', cargo: '', departamento: '', salario: '', fecha_contratacion: '' })
       cargarEmpleados()
     } catch (err) {
@@ -55,7 +83,7 @@ function Empleados() {
     <div style={{ padding: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ color: '#1a1a2e' }}>Empleados</h1>
-        <button onClick={() => setMostrarFormulario(true)} style={{
+        <button onClick={handleNuevo} style={{
           padding: '10px 20px', backgroundColor: '#534AB7', color: 'white',
           border: 'none', borderRadius: '8px', cursor: 'pointer'
         }}>+ Nuevo empleado</button>
@@ -78,13 +106,17 @@ function Empleados() {
           background: 'white', padding: '24px', borderRadius: '12px',
           marginBottom: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ marginBottom: '16px', color: '#1a1a2e' }}>Nuevo empleado</h3>
+          <h3 style={{ marginBottom: '16px', color: '#1a1a2e' }}>
+            {empleadoEditando ? 'Editar empleado' : 'Nuevo empleado'}
+          </h3>
           <form onSubmit={handleGuardar}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <input placeholder="Nombre *" required value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Apellido" value={form.apellido} onChange={e => setForm({ ...form, apellido: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Email *" required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
-              <input placeholder="Contraseña *" required type="password" value={form.contrasena} onChange={e => setForm({ ...form, contrasena: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              {!empleadoEditando && (
+                <input placeholder="Contraseña *" required type="password" value={form.contrasena} onChange={e => setForm({ ...form, contrasena: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              )}
               <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Cargo" value={form.cargo} onChange={e => setForm({ ...form, cargo: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Departamento" value={form.departamento} onChange={e => setForm({ ...form, departamento: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
@@ -92,8 +124,10 @@ function Empleados() {
               <input placeholder="Fecha contratación" type="date" value={form.fecha_contratacion} onChange={e => setForm({ ...form, fecha_contratacion: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#534AB7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Guardar</button>
-              <button type="button" onClick={() => setMostrarFormulario(false)} style={{ padding: '10px 20px', backgroundColor: '#eee', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+              <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#534AB7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                {empleadoEditando ? 'Actualizar' : 'Guardar'}
+              </button>
+              <button type="button" onClick={() => { setMostrarFormulario(false); setEmpleadoEditando(null) }} style={{ padding: '10px 20px', backgroundColor: '#eee', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
             </div>
           </form>
         </div>
@@ -117,7 +151,11 @@ function Empleados() {
                 <td style={{ padding: '12px 16px', color: '#888' }}>{e.email}</td>
                 <td style={{ padding: '12px 16px', color: '#888' }}>{e.cargo}</td>
                 <td style={{ padding: '12px 16px', color: '#888' }}>{e.departamento}</td>
-                <td style={{ padding: '12px 16px' }}>
+                <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
+                  <button onClick={() => handleEditar(e)} style={{
+                    padding: '6px 12px', backgroundColor: '#e8eaf6', color: '#534AB7',
+                    border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px'
+                  }}>Editar</button>
                   <button onClick={() => handleEliminar(e.id)} style={{
                     padding: '6px 12px', backgroundColor: '#ffebee', color: '#c62828',
                     border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px'

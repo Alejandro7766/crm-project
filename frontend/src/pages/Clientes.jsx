@@ -4,6 +4,7 @@ import axios from 'axios'
 function Clientes() {
   const [clientes, setClientes] = useState([])
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [clienteEditando, setClienteEditando] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [form, setForm] = useState({
     nombre: '', apellido: '', email: '', telefono: '',
@@ -23,11 +24,37 @@ function Clientes() {
     }
   }
 
+  const handleNuevo = () => {
+    setClienteEditando(null)
+    setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo' })
+    setMostrarFormulario(true)
+  }
+
+  const handleEditar = (cliente) => {
+    setClienteEditando(cliente)
+    setForm({
+      nombre: cliente.nombre || '',
+      apellido: cliente.apellido || '',
+      email: cliente.email || '',
+      telefono: cliente.telefono || '',
+      empresa: cliente.empresa || '',
+      categoria: cliente.categoria || '',
+      notas: cliente.notas || '',
+      estado: cliente.estado || 'activo'
+    })
+    setMostrarFormulario(true)
+  }
+
   const handleGuardar = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:3000/api/clientes', form)
+      if (clienteEditando) {
+        await axios.put(`http://localhost:3000/api/clientes/${clienteEditando.id}`, form)
+      } else {
+        await axios.post('http://localhost:3000/api/clientes', form)
+      }
       setMostrarFormulario(false)
+      setClienteEditando(null)
       setForm({ nombre: '', apellido: '', email: '', telefono: '', empresa: '', categoria: '', notas: '', estado: 'activo' })
       cargarClientes()
     } catch (err) {
@@ -55,7 +82,7 @@ function Clientes() {
     <div style={{ padding: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ color: '#1a1a2e' }}>Clientes</h1>
-        <button onClick={() => setMostrarFormulario(true)} style={{
+        <button onClick={handleNuevo} style={{
           padding: '10px 20px', backgroundColor: '#534AB7', color: 'white',
           border: 'none', borderRadius: '8px', cursor: 'pointer'
         }}>+ Nuevo cliente</button>
@@ -78,7 +105,9 @@ function Clientes() {
           background: 'white', padding: '24px', borderRadius: '12px',
           marginBottom: '24px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ marginBottom: '16px', color: '#1a1a2e' }}>Nuevo cliente</h3>
+          <h3 style={{ marginBottom: '16px', color: '#1a1a2e' }}>
+            {clienteEditando ? 'Editar cliente' : 'Nuevo cliente'}
+          </h3>
           <form onSubmit={handleGuardar}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <input placeholder="Nombre *" required value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
@@ -87,11 +116,18 @@ function Clientes() {
               <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Empresa" value={form.empresa} onChange={e => setForm({ ...form, empresa: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
               <input placeholder="Categoría" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <select value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value })} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+                <option value="potencial">Potencial</option>
+              </select>
             </div>
             <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '12px', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#534AB7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Guardar</button>
-              <button type="button" onClick={() => setMostrarFormulario(false)} style={{ padding: '10px 20px', backgroundColor: '#eee', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+              <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#534AB7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                {clienteEditando ? 'Actualizar' : 'Guardar'}
+              </button>
+              <button type="button" onClick={() => { setMostrarFormulario(false); setClienteEditando(null) }} style={{ padding: '10px 20px', backgroundColor: '#eee', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
             </div>
           </form>
         </div>
@@ -121,7 +157,11 @@ function Clientes() {
                     color: c.estado === 'activo' ? '#2e7d32' : c.estado === 'potencial' ? '#e65100' : '#c62828'
                   }}>{c.estado}</span>
                 </td>
-                <td style={{ padding: '12px 16px' }}>
+                <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
+                  <button onClick={() => handleEditar(c)} style={{
+                    padding: '6px 12px', backgroundColor: '#e8eaf6', color: '#534AB7',
+                    border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px'
+                  }}>Editar</button>
                   <button onClick={() => handleEliminar(c.id)} style={{
                     padding: '6px 12px', backgroundColor: '#ffebee', color: '#c62828',
                     border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px'
