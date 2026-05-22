@@ -12,12 +12,39 @@ const db = mysql.createConnection({
 
 // OBTENER TODOS LOS CLIENTES
 router.get('/', (req, res) => {
-  const sql = `SELECT c.*, u.nombre as empleado_nombre, u.apellido as empleado_apellido 
-               FROM clientes c
-               LEFT JOIN empleados e ON c.empleado_asignado_id = e.id
-               LEFT JOIN usuarios u ON e.usuario_id = u.id
-               ORDER BY c.creado_en DESC`;
-  db.query(sql, (err, results) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) return res.status(401).json({ error: 'No autorizado' });
+
+  const jwt = require('jsonwebtoken');
+  let usuario;
+  try {
+    usuario = jwt.verify(token, process.env.JWT_SECRET || 'secreto123');
+  } catch {
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+
+  let sql;
+  let params;
+
+  if (usuario.rol === 'administrador') {
+    sql = `SELECT c.*, u.nombre as empleado_nombre, u.apellido as empleado_apellido 
+           FROM clientes c
+           LEFT JOIN empleados e ON c.empleado_asignado_id = e.id
+           LEFT JOIN usuarios u ON e.usuario_id = u.id
+           ORDER BY c.creado_en DESC`;
+    params = [];
+  } else {
+    sql = `SELECT c.*, u.nombre as empleado_nombre, u.apellido as empleado_apellido 
+           FROM clientes c
+           LEFT JOIN empleados e ON c.empleado_asignado_id = e.id
+           LEFT JOIN usuarios u ON e.usuario_id = u.id
+           WHERE u.id = ?
+           ORDER BY c.creado_en DESC`;
+    params = [usuario.id];
+  }
+
+  db.query(sql, params, (err, results) => {
     if (err) return res.status(500).json({ error: 'Error al obtener clientes' });
     res.json(results);
   });

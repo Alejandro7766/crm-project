@@ -20,7 +20,10 @@ function Clientes() {
 
   const cargarClientes = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/clientes')
+      const token = localStorage.getItem('token')
+      const res = await axios.get('http://localhost:3000/api/clientes', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setClientes(res.data)
     } catch (err) {
       console.error('Error cargando clientes')
