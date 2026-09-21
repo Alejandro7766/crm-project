@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('mysql2');
 require('dotenv').config();
+const { verificarToken, soloAdmin } = require('../middleware/auth');
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -11,18 +12,8 @@ const db = mysql.createConnection({
 });
 
 // OBTENER TODOS LOS CLIENTES
-router.get('/', (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) return res.status(401).json({ error: 'No autorizado' });
-
-  const jwt = require('jsonwebtoken');
-  let usuario;
-  try {
-    usuario = jwt.verify(token, process.env.JWT_SECRET || 'secreto123');
-  } catch {
-    return res.status(401).json({ error: 'Token inválido' });
-  }
+router.get('/', verificarToken, (req, res) => {
+  const usuario = req.usuario;
 
   let sql;
   let params;
@@ -51,7 +42,7 @@ router.get('/', (req, res) => {
 });
 
 // OBTENER UN CLIENTE POR ID
-router.get('/:id', (req, res) => {
+router.get('/:id', verificarToken, (req, res) => {
   const sql = 'SELECT * FROM clientes WHERE id = ?';
   db.query(sql, [req.params.id], (err, results) => {
     if (err) return res.status(500).json({ error: 'Error al obtener cliente' });
@@ -61,7 +52,7 @@ router.get('/:id', (req, res) => {
 });
 
 // CREAR CLIENTE
-router.post('/', (req, res) => {
+router.post('/', verificarToken, (req, res) => {
   const { nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado } = req.body;
 
   if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -77,7 +68,7 @@ router.post('/', (req, res) => {
 });
 
 // EDITAR CLIENTE
-router.put('/:id', (req, res) => {
+router.put('/:id', verificarToken, (req, res) => {
   const { nombre, apellido, email, telefono, empresa, categoria, direccion, notas, estado, empleado_asignado_id } = req.body;
 
   const sql = `UPDATE clientes SET nombre=?, apellido=?, email=?, telefono=?, empresa=?, categoria=?, direccion=?, notas=?, estado=?, empleado_asignado_id=? 
@@ -90,7 +81,7 @@ router.put('/:id', (req, res) => {
 });
 
 // ELIMINAR CLIENTE
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verificarToken, soloAdmin, (req, res) => {
   const sql = 'DELETE FROM clientes WHERE id = ?';
   db.query(sql, [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: 'Error al eliminar cliente' });
