@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('mysql2');
 require('dotenv').config();
+const { verificarToken, soloAdmin } = require('../middleware/auth');
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -11,7 +12,7 @@ const db = mysql.createConnection({
 });
 
 // OBTENER TODOS LOS EMPLEADOS
-router.get('/', (req, res) => {
+router.get('/', verificarToken, soloAdmin, (req, res) => {
   const sql = `SELECT e.*, u.nombre, u.apellido, u.email, u.activo 
                FROM empleados e 
                JOIN usuarios u ON e.usuario_id = u.id
@@ -23,7 +24,7 @@ router.get('/', (req, res) => {
 });
 
 // OBTENER UN EMPLEADO POR ID
-router.get('/:id', (req, res) => {
+router.get('/:id', verificarToken, soloAdmin, (req, res) => {
   const sql = `SELECT e.*, u.nombre, u.apellido, u.email 
                FROM empleados e 
                JOIN usuarios u ON e.usuario_id = u.id
@@ -36,7 +37,7 @@ router.get('/:id', (req, res) => {
 });
 
 // CREAR EMPLEADO
-router.post('/', (req, res) => {
+router.post('/', verificarToken, soloAdmin, (req, res) => {
   const { nombre, apellido, email, contrasena, telefono, cargo, departamento, salario, fecha_contratacion } = req.body;
 
   if (!nombre || !email || !contrasena) {
@@ -72,7 +73,7 @@ router.post('/', (req, res) => {
 });
 
 // ELIMINAR EMPLEADO
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verificarToken, soloAdmin, (req, res) => {
     const sqlBuscar = 'SELECT usuario_id FROM empleados WHERE id = ?';
     db.query(sqlBuscar, [req.params.id], (err, results) => {
       if (err || results.length === 0) return res.status(500).json({ error: 'Empleado no encontrado' });
@@ -93,7 +94,7 @@ router.delete('/:id', (req, res) => {
   });
 
   // EDITAR EMPLEADO
-router.put('/:id', (req, res) => {
+router.put('/:id', verificarToken, soloAdmin, (req, res) => {
   const { nombre, apellido, email, telefono, cargo, departamento, salario, fecha_contratacion } = req.body;
 
   const sqlUsuario = `UPDATE usuarios SET nombre=?, apellido=?, email=? WHERE id=(SELECT usuario_id FROM empleados WHERE id=?)`;
