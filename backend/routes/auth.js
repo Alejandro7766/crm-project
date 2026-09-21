@@ -63,10 +63,10 @@ router.post('/login', (req, res) => {
     if (!valido) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
 
     const token = jwt.sign(
-      { id: usuario.id, email: usuario.email, rol: usuario.rol },
-      process.env.JWT_SECRET || 'secreto123',
-      { expiresIn: '8h' }
-    );
+  { id: usuario.id, email: usuario.email, rol: usuario.rol },
+  process.env.JWT_SECRET,
+  { expiresIn: '8h' }
+);
 
     res.json({
       token,
